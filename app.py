@@ -2,6 +2,7 @@
 r"""
 GitHub Copilot Metrics Explorer
 https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-usage
+
             ______
          .-'      `-.
        .'            `.
@@ -44,14 +45,22 @@ ACCOUNT_TYPE_MAP = {
     'Organization': "orgs",
 }
 
+BASE_URL = "https://api.github.com"
+
 def get_copilot_usage_metrics(
         account_name: str,
         account_type: str,
-        token: str, api_version:
-        str = DEFAULT_API_VERSION) -> Dict:
+        token: str,
+        team: str = None,
+        api_version: str = DEFAULT_API_VERSION) -> Dict:
     """Get the Copilot usage metrics for your organization or enterprise account"""
+    if team:
+        endpoint = f"{BASE_URL}/{account_type}/{account_name}/team/{team}/copilot/metrics"
+    else:
+        endpoint = f"{BASE_URL}/{account_type}/{account_name}/copilot/metrics"
+
     response = requests.get(
-        f"https://api.github.com/{account_type}/{account_name}/copilot/metrics",
+        endpoint,
         headers={
             'Accept': "application/vnd.github+json",
             'Authorization': f"Bearer {token}",
@@ -163,12 +172,20 @@ st.set_page_config(
 account_name = st.sidebar.text_input('Account Name', os.getenv('GITHUB_ACCOUNT'))
 account_type = st.sidebar.selectbox('Account Type', ["Enterprise", "Organization"], index=0)
 
+# Get team details
+team_name = st.sidebar.text_input('Team Name', os.getenv('GITHUB_TEAM'))
+
 # Retrieve GH token
 token = st.sidebar.text_input('GitHub Token', os.getenv('GITHUB_TOKEN'), type='password')
 
 # Get Copilot usage metrics
 if st.sidebar.button('Get Usage Metrics 📈'):
-    metrics = get_copilot_usage_metrics(account_name, ACCOUNT_TYPE_MAP[account_type], token)
+    metrics = get_copilot_usage_metrics(
+        account_name,
+        ACCOUNT_TYPE_MAP[account_type],
+        token,
+        team=team_name
+    )
     metrics = get_metrics_by_date(metrics)
 
     st.markdown("### Total Users 👨‍💻")
@@ -237,8 +254,12 @@ if st.sidebar.button('Get Usage Metrics 📈'):
 else:
     st.markdown("""
 # Copilot Metrics Explorer 🧐
+
 A simple dashboard for visualizing usage metrics from [GitHub Copilot](https://github.com/features/copilot) using the [Metrics](https://docs.github.com/en/rest/copilot/copilot-metrics) and [User Management APIs](https://docs.github.com/en/rest/copilot/copilot-user-management).
+
 To get started, please provide your GitHub account name, account type (organization or enterprise), and a personal access token with the necessary permissions to access the Copilot metrics.
+
 You can create a personal access token by following these [instructions](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token).
+
 ![](https://techcrunch.com/wp-content/uploads/2023/03/copilot_chat-3.gif)
 """)
