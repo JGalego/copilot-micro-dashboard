@@ -1,0 +1,4 @@
+pip-audit>=2.8.0
+pre-commit>=4.1.0
+pylama>=8.4.1
+pylint>=3.3.4
